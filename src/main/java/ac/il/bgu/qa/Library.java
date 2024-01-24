@@ -92,7 +92,7 @@ public class Library {
         // Check if the calculated check digit matches the last digit of the ISBN
         return checkDigit == Integer.parseInt(String.valueOf(isbn.charAt(12)));
     }
-
+    // shoval
     /**
      *  Validates if author name given as input is of valid format.
      *
@@ -138,7 +138,7 @@ public class Library {
         return true;
     }
 
-
+    // shoval
     /**
      * Registers a user with the library.
      *
@@ -243,7 +243,7 @@ public class Library {
         // Update the database to reflect the returned status of the book.
         databaseService.returnBook(ISBN);
     }
-
+    // shoval
     /**
      * Notifies a user with the reviews of a specified book.
      *
@@ -314,7 +314,7 @@ public class Library {
         // If all retry attempts fail, throw a notification exception.
         throw new NotificationException("Notification failed!");
     }
-
+    // shoval
     /**
      * Fetches a book by its ISBN and notifies the user with its reviews.
      *
