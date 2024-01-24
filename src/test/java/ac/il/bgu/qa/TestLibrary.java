@@ -31,11 +31,13 @@ public class TestLibrary {
         }
     }
 
-    @Test
-    public void GivenBookHasInvalidISBN_WhenAddBook_ThenThrowsIllegalArgumentException() {
+    @ParameterizedTest
+    @ValueSource(strings ={"","1000000000000","0000000000001","00000000000a1","0---000000000001","00000000000000","000000000000"})
+    @NullSource
+    public void GivenBookHasInvalidISBN_WhenAddBook_ThenThrowsIllegalArgumentException(String ISBN) {
         try{
             Book book = Mockito.mock(Book.class);
-            Mockito.when(book.getISBN()).thenReturn("1000000000000");
+            Mockito.when(book.getISBN()).thenReturn(ISBN);
             library.addBook(book);
             Assertions.fail("Expected an IllegalArgumentException to be thrown");
         } catch (IllegalArgumentException e) {
@@ -115,9 +117,6 @@ public class TestLibrary {
             Assertions.fail("no exception should be thrown");
         }
     }
-
-    @Test
-    public void
 
 
 
