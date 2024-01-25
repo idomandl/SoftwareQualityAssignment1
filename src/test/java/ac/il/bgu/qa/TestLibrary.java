@@ -8,6 +8,7 @@ import ac.il.bgu.qa.services.*;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.*;
@@ -39,8 +40,8 @@ public class TestLibrary {
     }
 
     @ParameterizedTest
-    @ValueSource(strings ={"","1000000000000","0000000000001","00000000000a1","0---000000000001","00000000000000","000000000000"})
-    @NullSource
+    @ValueSource(strings ={"1000000000000","0000000000001","00000000000a1","0---000000000001","00000000000000","000000000000"})
+    @NullAndEmptySource
     public void GivenBookHasInvalidISBN_WhenAddBook_ThenThrowsIllegalArgumentException(String ISBN) {
         try{
             Book book = Mockito.mock(Book.class);
@@ -68,7 +69,7 @@ public class TestLibrary {
     }
 
     @ParameterizedTest
-    @ValueSource(strings={"","a3","3a","a3a","3","@","-aa-"})
+    @ValueSource(strings={"","a3","3a","a3a","3","@","-aa-", "a--a", "a''a"})
     @NullSource
     public void GivenBookHasInvalidAuthor_WhenAddBook_ThenThrowsIllegalArgumentException(String author) {
         try{
@@ -112,13 +113,14 @@ public class TestLibrary {
             Assertions.assertEquals("Book already exists.", e.getMessage());
         }
     }
-    @Test
-    public void GivenBookIsGood_WhenAddBook_ThenAddBook() {
+    @ParameterizedTest
+    @ValueSource(strings={"a.a","a-a","a'a","a a","aa"})
+    public void GivenBookIsGood_WhenAddBook_ThenAddBook(String author) {
         try{
             Book book = Mockito.mock(Book.class);
             Mockito.when(book.getISBN()).thenReturn("0000000000000");
             Mockito.when(book.getTitle()).thenReturn("TITLE");
-            Mockito.when(book.getAuthor()).thenReturn("AUTHOR");
+            Mockito.when(book.getAuthor()).thenReturn(author);
             Mockito.when(databaseServiceMock.getBookByISBN("0000000000000")).thenReturn(null);
             library.addBook(book);
             Assertions.assertTrue(true);
