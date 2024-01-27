@@ -1,10 +1,8 @@
 package ac.il.bgu.qa;
 
-import ac.il.bgu.qa.errors.BookAlreadyBorrowedException;
-import ac.il.bgu.qa.errors.BookNotBorrowedException;
-import ac.il.bgu.qa.errors.BookNotFoundException;
-import ac.il.bgu.qa.errors.UserNotRegisteredException;
+import ac.il.bgu.qa.errors.*;
 import ac.il.bgu.qa.services.*;
+import com.sun.tools.javac.comp.Todo;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -15,6 +13,9 @@ import org.mockito.*;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class TestLibrary {
 
     @Mock
@@ -22,7 +23,11 @@ public class TestLibrary {
     @Mock
     ReviewService reviewServiceMock = Mockito.mock(ReviewService.class);
 
+    @Mock
     Library library = new Library(databaseServiceMock, reviewServiceMock);
+
+    @Mock
+    NotificationService notificationServiceMock = Mockito.mock(NotificationService.class);
 
     @BeforeAll
     static void beforeAll() {
@@ -268,4 +273,368 @@ public class TestLibrary {
             Assertions.fail("no exception should be thrown");
         }
     }
+
+    // Tests for: notifyUserWithBookReviews()
+    @Test
+    public void GivenISBNInvalid_WhenNotifyUserWithBookReviews_ThenThrowsIllegalArgumentException() {
+        try{
+            Book book = Mockito.mock(Book.class);
+            User user = Mockito.mock(User.class);
+
+            Mockito.when(book.getISBN()).thenReturn(null);
+            Mockito.when(user.getId()).thenReturn("111111111111");
+            library.notifyUserWithBookReviews(book.getISBN(), user.getId());
+            Assertions.fail("Expected an IllegalArgumentException to be thrown");
+
+        } catch (IllegalArgumentException e) {
+            Assertions.assertEquals("Invalid ISBN.", e.getMessage());
+        }
+    }
+
+    @Test
+    public void GivenUserIdInvalidNull_WhenNotifyUserWithBookReviews_ThenThrowsIllegalArgumentException() {
+        try{
+            Book book = Mockito.mock(Book.class);
+            User user = Mockito.mock(User.class);
+
+            Mockito.when(book.getISBN()).thenReturn("0000000000000");
+            Mockito.when(user.getId()).thenReturn(null);
+            library.notifyUserWithBookReviews(book.getISBN(), user.getId());
+            Assertions.fail("Expected an IllegalArgumentException to be thrown");
+
+        } catch (IllegalArgumentException e) {
+            Assertions.assertEquals("Invalid user Id.", e.getMessage());
+        }
+    }
+
+    @Test
+    public void GivenUserIdInvalidWithLetters_WhenNotifyUserWithBookReviews_ThenThrowsIllegalArgumentException() {
+        try{
+            Book book = Mockito.mock(Book.class);
+            User user = Mockito.mock(User.class);
+
+            Mockito.when(book.getISBN()).thenReturn("0000000000000");
+            Mockito.when(user.getId()).thenReturn("123AbC111111");
+            library.notifyUserWithBookReviews(book.getISBN(), user.getId());
+            Assertions.fail("Expected an IllegalArgumentException to be thrown");
+
+        } catch (IllegalArgumentException e) {
+            Assertions.assertEquals("Invalid user Id.", e.getMessage());
+        }
+    }
+
+    @Test
+    public void GivenBookIsNull_WhenNotifyUserWithBookReviews_ThenThrowsBookNotFoundException() {
+        try{
+            Book book = Mockito.mock(Book.class);
+            User user = Mockito.mock(User.class);
+
+            Mockito.when(book.getISBN()).thenReturn("0000000000000");
+            Mockito.when(user.getId()).thenReturn("111111111111");
+
+            Mockito.when(databaseServiceMock.getBookByISBN(book.getISBN())).thenReturn(null);
+            Mockito.when(databaseServiceMock.getUserById(user.getId())).thenReturn(user);
+
+            library.notifyUserWithBookReviews(book.getISBN(), user.getId());
+
+            Assertions.fail("Expected an BookNotFoundException to be thrown");
+
+        } catch (BookNotFoundException e) {
+            Assertions.assertEquals("Book not found!", e.getMessage());
+        }
+    }
+
+    @Test
+    public void GivenUserIsNull_WhenNotifyUserWithBookReviews_ThenThrowsUserNotFoundException() {
+        try{
+            Book book = Mockito.mock(Book.class);
+            User user = Mockito.mock(User.class);
+
+            Mockito.when(book.getISBN()).thenReturn("0000000000000");
+            Mockito.when(user.getId()).thenReturn("111111111111");
+
+            Mockito.when(databaseServiceMock.getBookByISBN(book.getISBN())).thenReturn(book);
+            Mockito.when(databaseServiceMock.getUserById(user.getId())).thenReturn(null);
+
+            library.notifyUserWithBookReviews(book.getISBN(), user.getId());
+
+            Assertions.fail("Expected an UserNotRegisteredException to be thrown");
+
+        } catch (BookNotFoundException e) {
+            Assertions.assertEquals("User not found!", e.getMessage());
+        }
+    }
+
+    @Test
+    public void GivenBookIsBorrowed_WhenNotifyUserWithBookReviews_ThenThrowsBookAlreadyBorrowedException() {
+        try{
+            Book book = Mockito.mock(Book.class);
+            User user = Mockito.mock(User.class);
+
+            Mockito.when(book.getISBN()).thenReturn("0000000000000");
+            Mockito.when(user.getId()).thenReturn("111111111111");
+
+            Mockito.when(databaseServiceMock.getBookByISBN(book.getISBN())).thenReturn(book);
+            Mockito.when(databaseServiceMock.getUserById(user.getId())).thenReturn(user);
+
+            Mockito.when(book.isBorrowed()).thenReturn(true);
+
+            library.notifyUserWithBookReviews(book.getISBN(), user.getId());
+            Assertions.fail("Expected an BookAlreadyBorrowedException to be thrown");
+
+        } catch (BookAlreadyBorrowedException e) {
+            Assertions.assertEquals("Book already borrowed!", e.getMessage());
+        }
+    }
+
+    @Test
+    public void GivenNullReviews_WhenNotifyUserWithBookReviews_ThenThrowsBookHasBadReviewsException() {
+        try{
+            Book book = Mockito.mock(Book.class);
+            User user = Mockito.mock(User.class);
+
+            Mockito.when(book.getISBN()).thenReturn("0000000000000");
+            Mockito.when(user.getId()).thenReturn("111111111111");
+
+            Mockito.when(databaseServiceMock.getBookByISBN(book.getISBN())).thenReturn(book);
+            Mockito.when(databaseServiceMock.getUserById(user.getId())).thenReturn(user);
+
+            Mockito.when(book.isBorrowed()).thenReturn(false);
+
+            Mockito.when(reviewServiceMock.getReviewsForBook(book.getISBN())).thenReturn(null);
+
+            library.notifyUserWithBookReviews(book.getISBN(), user.getId());
+            Assertions.fail("Expected an NoReviewsFoundException to be thrown");
+
+        } catch (NoReviewsFoundException e) {
+            Assertions.assertEquals("No reviews found!", e.getMessage());
+        }
+    }
+
+    @Test
+    public void GivenEmptyReviews_WhenNotifyUserWithBookReviews_ThenThrowsBookHasBadReviewsException() {
+        try{
+            Book book = Mockito.mock(Book.class);
+            User user = Mockito.mock(User.class);
+
+            Mockito.when(book.getISBN()).thenReturn("0000000000000");
+            Mockito.when(user.getId()).thenReturn("111111111111");
+
+            Mockito.when(databaseServiceMock.getBookByISBN(book.getISBN())).thenReturn(book);
+            Mockito.when(databaseServiceMock.getUserById(user.getId())).thenReturn(user);
+
+            Mockito.when(book.isBorrowed()).thenReturn(false);
+
+            Mockito.when(reviewServiceMock.getReviewsForBook(book.getISBN())).thenReturn(new ArrayList<String>());
+
+            library.notifyUserWithBookReviews(book.getISBN(), user.getId());
+            Assertions.fail("Expected an NoReviewsFoundException to be thrown");
+
+        } catch (NoReviewsFoundException e) {
+            Assertions.assertEquals("No reviews found!", e.getMessage());
+        }
+    }
+
+    @Test
+    public void GivenFailedNotification_WhenNotifyUserWithBookReviews_ThenThrowsNotificationFailedException() {
+        //try{
+            Book book = Mockito.mock(Book.class);
+            User user = Mockito.mock(User.class);
+
+            Mockito.when(book.getISBN()).thenReturn("0000000000000");
+            Mockito.when(user.getId()).thenReturn("111111111111");
+
+            Mockito.when(databaseServiceMock.getBookByISBN(book.getISBN())).thenReturn(book);
+            Mockito.when(databaseServiceMock.getUserById(user.getId())).thenReturn(user);
+
+            Mockito.when(book.isBorrowed()).thenReturn(false);
+
+            Mockito.when(user.getNotificationService()).thenReturn(notificationServiceMock);
+            Mockito.when(reviewServiceMock.getReviewsForBook(book.getISBN())).thenReturn(new ArrayList<String>(){{add("Review 1");}});
+
+            /* Todo:
+
+            library.notifyUserWithBookReviews(book.getISBN(), user.getId());
+            Assertions.fail("Expected an NotificationFailedException to be thrown");
+
+        } catch (NotificationException e) {
+            Assertions.assertEquals("Notification failed!", e.getMessage()); */
+    }
+
+    // Tests for: getBookByISBN
+
+    @ParameterizedTest
+    @ValueSource(strings ={"1000000000000","0000000000001","00000000000a1","0---000000000001","00000000000000","000000000000"})
+    @NullAndEmptySource
+    public void GivenInvalidISBN_WhenGetBookByISBN_ThenThrowIllegalArgumentException(String ISBN) {
+        try{
+            Book book = Mockito.mock(Book.class);
+            User user = Mockito.mock(User.class);
+
+            Mockito.when(user.getId()).thenReturn("111111111111");
+            //library.addBook(book);
+            library.getBookByISBN(ISBN, user.getId());
+            Assertions.fail("Expected an IllegalArgumentException to be thrown");
+
+        } catch (IllegalArgumentException e) {
+            Assertions.assertEquals("Invalid ISBN.", e.getMessage());
+        }
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = {"","a111111111111", "11111111111","1111111111111","aaaaaaaaaaaa","            "})
+    public void GivenInvalidUserId_WhenGetBookByISBN_ThenThrowIllegalArgumentException(String userId) {
+        try{
+            Book book = Mockito.mock(Book.class);
+            Mockito.when(book.getISBN()).thenReturn("0000000000000");
+
+            library.getBookByISBN(book.getISBN(), userId);
+            Assertions.fail("Expected an IllegalArgumentException to be thrown");
+
+        } catch (IllegalArgumentException e) {
+            Assertions.assertEquals("Invalid user ID.", e.getMessage());
+        }
+    }
+
+    @Test
+    public void GivenNullUserId_WhenGetBookByISBN_ThenThrowIllegalArgumentException() {
+        try{
+            Book book = Mockito.mock(Book.class);
+            Mockito.when(book.getISBN()).thenReturn("0000000000000");
+
+            library.getBookByISBN(book.getISBN(), null);
+            Assertions.fail("Expected an IllegalArgumentException to be thrown");
+
+        } catch (IllegalArgumentException e) {
+            Assertions.assertEquals("Invalid user ID.", e.getMessage());
+        }
+    }
+
+    @Test
+    public void GivenBookIsNull_WhenGetBookByISBN_ThenThrowBookNotFoundException() {
+        try{
+            Book book = Mockito.mock(Book.class);
+            User user = Mockito.mock(User.class);
+
+            Mockito.when(book.getISBN()).thenReturn("0000000000000");
+            Mockito.when(user.getId()).thenReturn("111111111111");
+
+            Mockito.when(databaseServiceMock.getBookByISBN(book.getISBN())).thenReturn(null);
+
+            library.getBookByISBN(book.getISBN(), user.getId());
+            Assertions.fail("Expected an BookNotFoundException to be thrown");
+
+        } catch (BookNotFoundException e) {
+            Assertions.assertEquals("Book not found.", e.getMessage());
+        }
+    }
+
+    // Tests for: registerUser
+
+    @Test
+    public void GivenNullUser_WhenRegisterUser_ThenThrowIllegalArgumentException() {
+        try{
+            library.registerUser(null);
+            Assertions.fail("Expected an IllegalArgumentException to be thrown");
+
+        } catch (IllegalArgumentException e) {
+            Assertions.assertEquals("Invalid user.", e.getMessage());
+        }
+    }
+
+    @Test
+    public void GivenNullUserId_WhenRegisterUser_ThenThrowIllegalArgumentException() {
+        try{
+            User user = Mockito.mock(User.class);
+            Mockito.when(user.getId()).thenReturn(null);
+
+            library.registerUser(user);
+            Assertions.fail("Expected an IllegalArgumentException to be thrown");
+
+        } catch (IllegalArgumentException e) {
+            Assertions.assertEquals("Invalid user ID.", e.getMessage());
+        }
+    }
+
+    @Test
+    public void GivenNullUserName_WhenRegisterUser_ThenThrowIllegalArgumentException() {
+        try{
+            User user = Mockito.mock(User.class);
+            Mockito.when(user.getId()).thenReturn("111111111111");
+            Mockito.when(user.getName()).thenReturn(null);
+
+            library.registerUser(user);
+            Assertions.fail("Expected an IllegalArgumentException to be thrown");
+
+        } catch (IllegalArgumentException e) {
+            Assertions.assertEquals("Invalid user name.", e.getMessage());
+        }
+    }
+
+    @Test
+    public void GivenNullNotificationService_WhenRegisterUser_ThenThrowIllegalArgumentException() {
+        try{
+            User user = Mockito.mock(User.class);
+            Mockito.when(user.getId()).thenReturn("111111111111");
+            Mockito.when(user.getName()).thenReturn("Test User");
+            Mockito.when(user.getNotificationService()).thenReturn(null);
+
+            library.registerUser(user);
+            Assertions.fail("Expected an IllegalArgumentException to be thrown");
+
+        } catch (IllegalArgumentException e) {
+            Assertions.assertEquals("Invalid user address.", e.getMessage());
+        }
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = {"","a111111111111", "11111111111","1111111111111","aaaaaaaaaaaa","            "})
+    public void GivenInvalidUserId_WhenRegisterUser_ThenThrowIllegalArgumentException(String userId) {
+        try{
+            User user = Mockito.mock(User.class);
+            Mockito.when(user.getId()).thenReturn(userId);
+
+            library.registerUser(user);
+            Assertions.fail("Expected an IllegalArgumentException to be thrown");
+
+        } catch (IllegalArgumentException e) {
+            Assertions.assertEquals("Invalid user ID.", e.getMessage());
+        }
+    }
+
+    @Test
+    public void GivenInvalidUserName_WhenRegisterUser_ThenThrowIllegalArgumentException() {
+        try{
+            User user = Mockito.mock(User.class);
+            Mockito.when(user.getId()).thenReturn("111111111111");
+            Mockito.when(user.getName()).thenReturn("");
+
+            library.registerUser(user);
+            Assertions.fail("Expected an IllegalArgumentException to be thrown");
+
+        } catch (IllegalArgumentException e) {
+            Assertions.assertEquals("Invalid user name.", e.getMessage());
+        }
+    }
+
+    @Test
+    public void GivenUserAlreadyExists_WhenRegisterUser_ThenThrowUserAlreadyExistsException() {
+        try{
+            User user = Mockito.mock(User.class);
+            Mockito.when(user.getId()).thenReturn("111111111111");
+            Mockito.when(user.getName()).thenReturn("Test User");
+            Mockito.when(user.getNotificationService()).thenReturn(notificationServiceMock);
+
+            Mockito.when(databaseServiceMock.getUserById(user.getId())).thenReturn(user);
+
+            library.registerUser(user);
+            Assertions.fail("Expected an IllegalArgumentException to be thrown");
+
+        } catch (IllegalArgumentException e) {
+            Assertions.assertEquals("User already exists.", e.getMessage());
+        }
+    }
 }
+

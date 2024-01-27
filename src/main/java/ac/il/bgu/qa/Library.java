@@ -243,6 +243,8 @@ public class Library {
         // Update the database to reflect the returned status of the book.
         databaseService.returnBook(ISBN);
     }
+
+
     // shoval
     /**
      * Notifies a user with the reviews of a specified book.
@@ -314,6 +316,7 @@ public class Library {
         // If all retry attempts fail, throw a notification exception.
         throw new NotificationException("Notification failed!");
     }
+
     // shoval
     /**
      * Fetches a book by its ISBN and notifies the user with its reviews.
@@ -359,4 +362,3 @@ public class Library {
         return book;
     }
 }
-
