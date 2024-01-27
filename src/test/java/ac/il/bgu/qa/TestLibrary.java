@@ -127,8 +127,15 @@ public class TestLibrary {
             Mockito.when(book.getTitle()).thenReturn("TITLE");
             Mockito.when(book.getAuthor()).thenReturn(author);
             Mockito.when(databaseServiceMock.getBookByISBN("0000000000000")).thenReturn(null);
+            Answer<Void> answer = new Answer<Void>() {
+                public Void answer(InvocationOnMock invocation) throws Throwable {
+                    Mockito.when(databaseServiceMock.getBookByISBN("0000000000000")).thenReturn(book);
+                    return null;
+                }
+            };
+            Mockito.when(databaseServiceMock.addBook("0000000000000", book)).thenAnswer(answer);
             library.addBook(book);
-            Assertions.assertTrue(true);
+            Assertions.assertEquals(databaseServiceMock.getBookByISBN("0000000000000"),book);
         } catch (IllegalArgumentException e) {
             Assertions.fail("no exception should be thrown");
         }
