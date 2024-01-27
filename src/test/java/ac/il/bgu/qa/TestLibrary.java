@@ -2,7 +2,6 @@ package ac.il.bgu.qa;
 
 import ac.il.bgu.qa.errors.*;
 import ac.il.bgu.qa.services.*;
-import com.sun.tools.javac.comp.Todo;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -127,13 +126,13 @@ public class TestLibrary {
             Mockito.when(book.getTitle()).thenReturn("TITLE");
             Mockito.when(book.getAuthor()).thenReturn(author);
             Mockito.when(databaseServiceMock.getBookByISBN("0000000000000")).thenReturn(null);
-            Answer<Void> answer = new Answer<Void>() {
-                public Void answer(InvocationOnMock invocation) throws Throwable {
-                    Mockito.when(databaseServiceMock.getBookByISBN("0000000000000")).thenReturn(book);
-                    return null;
-                }
-            };
-            Mockito.when(databaseServiceMock.addBook("0000000000000", book)).thenAnswer(answer);
+//            Answer<Void> answer = new Answer<Void>() {
+//                public Void answer(InvocationOnMock invocation) throws Throwable {
+//                    Mockito.when(databaseServiceMock.getBookByISBN("0000000000000")).thenReturn(book);
+//                    return null;
+//                }
+//            };
+//            Mockito.when(databaseServiceMock.addBook("0000000000000", book)).thenAnswer(answer);
             library.addBook(book);
             Assertions.assertEquals(databaseServiceMock.getBookByISBN("0000000000000"),book);
         } catch (IllegalArgumentException e) {
