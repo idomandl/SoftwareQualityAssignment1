@@ -39,7 +39,9 @@ public class TestLibrary {
     }
 
     @ParameterizedTest
-    @ValueSource(strings ={"1000000000000","0000000000001","00000000000a1","0---000000000001","00000000000000","000000000000","1000000000001"})
+    @ValueSource(strings ={"1000000000000","0000000000001","00000000000a1","0---000000000001","00000000000000","000000000000",
+            "1293100000005","1290000000003","1290000000002","1290000000001","1290000000000","1290000000006","1290000000007",
+            "1290000000008","1290000000009","1290000000014"})
     @NullAndEmptySource
     public void GivenBookHasInvalidISBN_WhenAddBook_ThenThrowsIllegalArgumentException(String ISBN) {
         Book book = Mockito.mock(Book.class);
@@ -88,19 +90,19 @@ public class TestLibrary {
         Assertions.assertThrows(IllegalArgumentException.class, () -> library.addBook(book), "Book already exists.");
     }
     @ParameterizedTest
-    @ValueSource(strings={"a.a","a-a","a'a","a a","aa"})
-    public void GivenBookIsGood_WhenAddBook_ThenAddBook(String author) {
+    @CsvSource({"a.a,0000000000000","a-a,1122334455666","a'a,0000000000000","a a,1290000000004","aa,1290000000004","aa,1000000000009"})
+    public void GivenBookIsGood_WhenAddBook_ThenAddBook(String author, String ISBN) {
         Book book = Mockito.mock(Book.class);
-        Mockito.when(book.getISBN()).thenReturn("0000000000000");
+        Mockito.when(book.getISBN()).thenReturn(ISBN);
         Mockito.when(book.getTitle()).thenReturn("TITLE");
         Mockito.when(book.getAuthor()).thenReturn(author);
-        Mockito.when(databaseServiceMock.getBookByISBN("0000000000000")).thenReturn(null);
+        Mockito.when(databaseServiceMock.getBookByISBN(ISBN)).thenReturn(null);
         library.addBook(book);
-        Mockito.verify(databaseServiceMock).addBook("0000000000000", book);
+        Mockito.verify(databaseServiceMock).addBook(ISBN, book);
     }
 
     @ParameterizedTest
-    @CsvSource({",1","1000000000000,1","0000000000001,1","00000000000a1,1","0---000000000001,1","00000000000000,1","000000000000,1"})
+    @CsvSource({",1","1000000000000,1","0000000000001,1","00000000000a1,1","0---000000000001,1","00000000000000,1","000000000000,1","1000000000001,1"})
     public void GivenInvalidBookISBN_WhenBorrowBook_ThenThrowsIllegalArgumentException(String ISBN, String userID) {
         Assertions.assertThrows(IllegalArgumentException.class, () -> library.borrowBook(ISBN, userID), "Invalid ISBN.");
     }
