@@ -13,6 +13,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class TestLibrary {
@@ -261,49 +262,28 @@ public class TestLibrary {
         }
     }
 
-//    @Test
-//    public void GivenUserIsNull_WhenNotifyUserWithBookReviews_ThenThrowsUserNotFoundException() {
-//        try{
-//            Book book = Mockito.mock(Book.class);
-//            User user = Mockito.mock(User.class);
-//
-//            Mockito.when(book.getISBN()).thenReturn("0000000000000");
-//            Mockito.when(user.getId()).thenReturn("111111111111");
-//
-//            Mockito.when(databaseServiceMock.getBookByISBN(book.getISBN())).thenReturn(book);
-//            Mockito.when(databaseServiceMock.getUserById(user.getId())).thenReturn(null);
-//
-//            library.notifyUserWithBookReviews(book.getISBN(), user.getId());
-//
-//            Assertions.fail("Expected an UserNotRegisteredException to be thrown");
-//
-//        } catch (BookNotFoundException e) {
-//            Assertions.assertEquals("User not found!", e.getMessage());
-//        }
-//    }
+   @Test
+    public void GivenUserIsNull_WhenNotifyUserWithBookReviews_ThenThrowsUserNotFoundException() {
+        try{
+            Book book = Mockito.mock(Book.class);
+            User user = Mockito.mock(User.class);
 
-//    @Test
-//    public void GivenBookIsBorrowed_WhenNotifyUserWithBookReviews_ThenThrowsBookAlreadyBorrowedException() {
-//        try{
-//            Book book = Mockito.mock(Book.class);
-//            User user = Mockito.mock(User.class);
-//
-//            Mockito.when(book.getISBN()).thenReturn("0000000000000");
-//            Mockito.when(user.getId()).thenReturn("111111111111");
-//
-//            Mockito.when(databaseServiceMock.getBookByISBN(book.getISBN())).thenReturn(book);
-//            Mockito.when(databaseServiceMock.getUserById(user.getId())).thenReturn(user);
-//
-//            Mockito.when(book.isBorrowed()).thenReturn(true);
-//
-//            library.notifyUserWithBookReviews(book.getISBN(), user.getId());
-//            Assertions.fail("Expected an BookAlreadyBorrowedException to be thrown");
-//
-//        } catch (BookAlreadyBorrowedException e) {
-//            Assertions.assertEquals("Book already borrowed!", e.getMessage());
-//        }
-//    }
+            Mockito.when(book.getISBN()).thenReturn("0000000000000");
+            Mockito.when(user.getId()).thenReturn("111111111111");
 
+            Mockito.when(databaseServiceMock.getBookByISBN(book.getISBN())).thenReturn(book);
+            Mockito.when(databaseServiceMock.getUserById(user.getId())).thenReturn(null);
+
+            library.notifyUserWithBookReviews(book.getISBN(), user.getId());
+
+            Assertions.fail("Expected an UserNotRegisteredException to be thrown");
+
+        } catch (UserNotRegisteredException e) {
+            Assertions.assertEquals("User not found!", e.getMessage());
+        }
+    }
+
+    // here
     @Test
     public void GivenNullReviews_WhenNotifyUserWithBookReviews_ThenThrowsBookHasBadReviewsException() {
         try{
@@ -352,9 +332,10 @@ public class TestLibrary {
         }
     }
 
+    /*
     @Test
     public void GivenFailedNotification_WhenNotifyUserWithBookReviews_ThenThrowsNotificationFailedException() {
-        //try{
+
             Book book = Mockito.mock(Book.class);
             User user = Mockito.mock(User.class);
 
@@ -369,13 +350,54 @@ public class TestLibrary {
             Mockito.when(user.getNotificationService()).thenReturn(notificationServiceMock);
             Mockito.when(reviewServiceMock.getReviewsForBook(book.getISBN())).thenReturn(new ArrayList<String>(){{add("Review 1");}});
 
-            /* Todo:
 
             library.notifyUserWithBookReviews(book.getISBN(), user.getId());
             Assertions.fail("Expected an NotificationFailedException to be thrown");
 
         } catch (NotificationException e) {
-            Assertions.assertEquals("Notification failed!", e.getMessage()); */
+            Assertions.assertEquals("Notification failed!", e.getMessage());
+    } */
+
+    @Test
+    public void GivenFailedNotification_WhenNotifyUserWithBookReviews_ThenThrowsNotificationFailedException() {
+        try {
+            Book book = Mockito.mock(Book.class);
+            User user = Mockito.mock(User.class);
+
+            Mockito.when(book.getISBN()).thenReturn("0000000000000");
+            Mockito.when(user.getId()).thenReturn("111111111111");
+
+            Mockito.when(databaseServiceMock.getBookByISBN(book.getISBN())).thenReturn(book);
+            Mockito.when(databaseServiceMock.getUserById(user.getId())).thenReturn(user);
+
+            Mockito.when(reviewServiceMock.getReviewsForBook(book.getISBN())).thenReturn(null);
+            library.notifyUserWithBookReviews(book.getISBN(), user.getId());
+            Assertions.fail("Expected an NoReviewsFoundException to be thrown");
+
+        } catch (NoReviewsFoundException e) {
+            Assertions.assertEquals("No reviews found!", e.getMessage());
+        }
+    }
+
+    @Test
+    public void GivenFinally_WhenNotifyUserWithBookReviews_ThenThrowsNotificationFailedException() {
+        try {
+            Book book = Mockito.mock(Book.class);
+            User user = Mockito.mock(User.class);
+
+            Mockito.when(book.getISBN()).thenReturn("0000000000000");
+            Mockito.when(user.getId()).thenReturn("111111111111");
+
+            Mockito.when(databaseServiceMock.getBookByISBN(book.getISBN())).thenReturn(book);
+            Mockito.when(databaseServiceMock.getUserById(user.getId())).thenReturn(user);
+
+            Mockito.when(reviewServiceMock.getReviewsForBook(book.getISBN())).thenReturn(new ArrayList<>(Arrays.asList("Review 1", "Review 2")));
+            library.notifyUserWithBookReviews(book.getISBN(), user.getId());
+            Mockito.verify(reviewServiceMock).close();
+
+        } catch (Exception e) {
+            Assertions.fail("Did not expect an exception to be thrown");
+        }
     }
 
     // Tests for: getBookByISBN
@@ -447,6 +469,47 @@ public class TestLibrary {
         }
     }
 
+    @Test
+    public void GivenBookIsBorrowed_WhenGetBookByISBN_ThenThrowBookAlreadyBorrowedException() {
+        try{
+            Book book = Mockito.mock(Book.class);
+            User user = Mockito.mock(User.class);
+
+            Mockito.when(book.getISBN()).thenReturn("0000000000000");
+            Mockito.when(user.getId()).thenReturn("111111111111");;
+
+            Mockito.when(databaseServiceMock.getBookByISBN(book.getISBN())).thenReturn(book);
+            Mockito.when(book.isBorrowed()).thenReturn(true);
+
+            library.getBookByISBN(book.getISBN(), user.getId());
+            Assertions.fail("Expected an BookAlreadyBorrowedException to be thrown");
+
+        } catch (BookAlreadyBorrowedException e) {
+            Assertions.assertEquals("Book was already borrowed!", e.getMessage());
+        }
+    }
+
+   /* @Test
+    public void NotifyUserFailed_WhenGetBookByISBN_ThenThrowNotificationFailedException() {
+        try {
+            Book book = Mockito.mock(Book.class);
+            User user = Mockito.mock(User.class);
+
+            Mockito.when(book.getISBN()).thenReturn("0000000000000");
+            Mockito.when(user.getId()).thenReturn("111111111111");
+            databaseServiceMock.registerUser(user.getId(), user);
+
+            Mockito.when(databaseServiceMock.getBookByISBN(book.getISBN())).thenReturn(book);
+            Mockito.when(book.isBorrowed()).thenReturn(false);
+
+            Mockito.verify(library).notifyUserWithBookReviews(book.getISBN(), user.getId());
+        }
+        catch (Exception e) {
+            Assertions.fail(e.getMessage());
+        }
+    } */
+
+
     // Tests for: registerUser
 
     @Test
@@ -489,21 +552,21 @@ public class TestLibrary {
         }
     }
 
-//    @Test
-//    public void GivenNullNotificationService_WhenRegisterUser_ThenThrowIllegalArgumentException() {
-//        try{
-//            User user = Mockito.mock(User.class);
-//            Mockito.when(user.getId()).thenReturn("111111111111");
-//            Mockito.when(user.getName()).thenReturn("Test User");
-//            Mockito.when(user.getNotificationService()).thenReturn(null);
-//
-//            library.registerUser(user);
-//            Assertions.fail("Expected an IllegalArgumentException to be thrown");
-//
-//        } catch (IllegalArgumentException e) {
-//            Assertions.assertEquals("Invalid user address.", e.getMessage());
-//        }
-//    }
+    @Test
+    public void GivenNullNotificationService_WhenRegisterUser_ThenThrowIllegalArgumentException() {
+        try{
+            User user = Mockito.mock(User.class);
+            Mockito.when(user.getId()).thenReturn("111111111111");
+            Mockito.when(user.getName()).thenReturn("Test User");
+            Mockito.when(user.getNotificationService()).thenReturn(null);
+
+            library.registerUser(user);
+            Assertions.fail("Expected an IllegalArgumentException to be thrown");
+
+        } catch (IllegalArgumentException e) {
+            Assertions.assertEquals("Invalid notification service.", e.getMessage());
+        }
+    }
 
     @ParameterizedTest
     @NullSource
@@ -551,6 +614,24 @@ public class TestLibrary {
 
         } catch (IllegalArgumentException e) {
             Assertions.assertEquals("User already exists.", e.getMessage());
+        }
+    }
+
+    @Test
+    public void GivenValidUser_WhenRegisterUser_ThenRegisterUser() {
+        try{
+            User user = Mockito.mock(User.class);
+            Mockito.when(user.getId()).thenReturn("111111111111");
+            Mockito.when(user.getName()).thenReturn("Test User");
+            Mockito.when(user.getNotificationService()).thenReturn(notificationServiceMock);
+
+            Mockito.when(databaseServiceMock.getUserById(user.getId())).thenReturn(null);
+
+            library.registerUser(user);
+            Mockito.verify(databaseServiceMock).registerUser(user.getId(), user);
+
+        } catch (Exception e) {
+            Assertions.fail(e.getMessage());
         }
     }
 }
