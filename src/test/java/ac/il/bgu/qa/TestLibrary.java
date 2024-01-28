@@ -12,9 +12,13 @@ import org.mockito.*;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import static net.bytebuddy.matcher.ElementMatchers.is;
 
 public class TestLibrary {
 
@@ -23,6 +27,9 @@ public class TestLibrary {
     @Mock
     ReviewService reviewServiceMock = Mockito.mock(ReviewService.class);
 
+    private final PrintStream standardOut = System.out;
+    private final PrintStream standardErr = System.err;
+    private final ByteArrayOutputStream outputStreamCaptor = new ByteArrayOutputStream();
     @Mock
     Library library = new Library(databaseServiceMock, reviewServiceMock);
 
@@ -194,7 +201,7 @@ public class TestLibrary {
 
     // Tests for: notifyUserWithBookReviews()
     @Test
-    public void GivenISBNInvalid_WhenNotifyUserWithBookReviews_ThenThrowsIllegalArgumentException() {
+    public void GivenISBNInvalid_WhenNotifyUserWithBookReviews_ThenThrowsNotificationsException() {
         try{
             Book book = Mockito.mock(Book.class);
             User user = Mockito.mock(User.class);
@@ -332,31 +339,25 @@ public class TestLibrary {
         }
     }
 
-    /*
+
     @Test
-    public void GivenFailedNotification_WhenNotifyUserWithBookReviews_ThenThrowsNotificationFailedException() {
-
-            Book book = Mockito.mock(Book.class);
-            User user = Mockito.mock(User.class);
-
-            Mockito.when(book.getISBN()).thenReturn("0000000000000");
-            Mockito.when(user.getId()).thenReturn("111111111111");
-
-            Mockito.when(databaseServiceMock.getBookByISBN(book.getISBN())).thenReturn(book);
-            Mockito.when(databaseServiceMock.getUserById(user.getId())).thenReturn(user);
-
-            Mockito.when(book.isBorrowed()).thenReturn(false);
-
-            Mockito.when(user.getNotificationService()).thenReturn(notificationServiceMock);
-            Mockito.when(reviewServiceMock.getReviewsForBook(book.getISBN())).thenReturn(new ArrayList<String>(){{add("Review 1");}});
-
-
-            library.notifyUserWithBookReviews(book.getISBN(), user.getId());
-            Assertions.fail("Expected an NotificationFailedException to be thrown");
-
-        } catch (NotificationException e) {
-            Assertions.assertEquals("Notification failed!", e.getMessage());
-    } */
+    public void GivenFailedNotification_WhenNotifyUserWithBookReviews_ThenThrowsNotificationException() {
+        Book book = Mockito.mock(Book.class);
+        User user = Mockito.mock(User.class);
+        Mockito.when(book.getISBN()).thenReturn("0000000000000");
+        Mockito.when(book.getTitle()).thenReturn("TITLE");
+        Mockito.when(user.getId()).thenReturn("111111111111");
+        Mockito.when(databaseServiceMock.getBookByISBN(book.getISBN())).thenReturn(book);
+        Mockito.when(databaseServiceMock.getUserById(user.getId())).thenReturn(user);
+        Mockito.when(book.isBorrowed()).thenReturn(false);
+        Mockito.when(reviewServiceMock.getReviewsForBook(book.getISBN())).thenReturn(new ArrayList<>(Arrays.asList("Review 1", "Review 2")));
+        Mockito.doThrow(new NotificationException("")).when(user).sendNotification("Reviews for '" + "TITLE" + "':\n" + String.join("\n", new ArrayList<>(Arrays.asList("Review 1", "Review 2"))));
+        System.setErr(new PrintStream(outputStreamCaptor));
+        Assertions.assertThrows(NotificationException.class,()->library.notifyUserWithBookReviews(book.getISBN(), user.getId()),"Notification failed!");
+        Mockito.verify(user,Mockito.times(5)).sendNotification("Reviews for '" + "TITLE" + "':\n" + String.join("\n", new ArrayList<>(Arrays.asList("Review 1", "Review 2"))));
+        Assertions.assertEquals("Notification failed! Retrying attempt 1/5\r\nNotification failed! Retrying attempt 2/5\r\nNotification failed! Retrying attempt 3/5\r\nNotification failed! Retrying attempt 4/5\r\nNotification failed! Retrying attempt 5/5", outputStreamCaptor.toString().trim());
+        System.setErr(standardErr);
+    }
 
     @Test
     public void GivenFailedNotification_WhenNotifyUserWithBookReviews_ThenThrowsNotificationFailedException() {
@@ -377,6 +378,18 @@ public class TestLibrary {
         } catch (NoReviewsFoundException e) {
             Assertions.assertEquals("No reviews found!", e.getMessage());
         }
+    }
+
+    @Test
+    public void GivenReviewServiceUnavailable_WhenNotifyUserWithBookReviews_ThenThrowsReviewServiceUnavailableException() {
+        Book book = Mockito.mock(Book.class);
+        User user = Mockito.mock(User.class);
+        Mockito.when(book.getISBN()).thenReturn("0000000000000");
+        Mockito.when(user.getId()).thenReturn("111111111111");
+        Mockito.when(databaseServiceMock.getBookByISBN(book.getISBN())).thenReturn(book);
+        Mockito.when(databaseServiceMock.getUserById(user.getId())).thenReturn(user);
+        Mockito.when(reviewServiceMock.getReviewsForBook(book.getISBN())).thenThrow(new ReviewException(""));
+        Assertions.assertThrows(ReviewServiceUnavailableException.class, () -> library.notifyUserWithBookReviews(book.getISBN(), user.getId()), "Review service unavailable!");
     }
 
     @Test
@@ -489,25 +502,22 @@ public class TestLibrary {
         }
     }
 
-   /* @Test
-    public void NotifyUserFailed_WhenGetBookByISBN_ThenThrowNotificationFailedException() {
-        try {
-            Book book = Mockito.mock(Book.class);
-            User user = Mockito.mock(User.class);
-
-            Mockito.when(book.getISBN()).thenReturn("0000000000000");
-            Mockito.when(user.getId()).thenReturn("111111111111");
-            databaseServiceMock.registerUser(user.getId(), user);
-
-            Mockito.when(databaseServiceMock.getBookByISBN(book.getISBN())).thenReturn(book);
-            Mockito.when(book.isBorrowed()).thenReturn(false);
-
-            Mockito.verify(library).notifyUserWithBookReviews(book.getISBN(), user.getId());
-        }
-        catch (Exception e) {
-            Assertions.fail(e.getMessage());
-        }
-    } */
+    @Test
+    public void NotifyUserFailed_WhenGetBookByISBN_ThenPrintsNotificationFailed() {
+        Book book = Mockito.mock(Book.class);
+        User user = Mockito.mock(User.class);
+        Mockito.when(book.getISBN()).thenReturn("0000000000000");
+        Mockito.when(book.getTitle()).thenReturn("TITLE");
+        Mockito.when(user.getId()).thenReturn("111111111111");
+        Mockito.when(databaseServiceMock.getBookByISBN(book.getISBN())).thenReturn(book);
+        Mockito.when(book.isBorrowed()).thenReturn(false);
+        Mockito.when(reviewServiceMock.getReviewsForBook(book.getISBN())).thenReturn(new ArrayList<>(Arrays.asList("Review 1", "Review 2")));
+        Mockito.doThrow(new NotificationException("")).when(user).sendNotification("Reviews for '" + "TITLE" + "':\n" + String.join("\n", new ArrayList<>(Arrays.asList("Review 1", "Review 2"))));
+        System.setOut(new PrintStream(outputStreamCaptor));
+        Assertions.assertEquals(library.getBookByISBN(book.getISBN(), user.getId()), book);
+        Assertions.assertEquals("Notification failed!", outputStreamCaptor.toString().trim());
+        System.setOut(standardOut);
+    }
 
 
     // Tests for: registerUser
